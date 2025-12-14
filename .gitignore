@@ -16,3 +16,7 @@ deeplabv3plus/runs/
 deeplabv3plus/logs/
 deeplabv3plus/visdom_logs/
 deeplabv3plus/*.zip
+
+# DeepLabV3+ Mask2Former stuff (avoid huge files)
+deeplabv3plus/mask2former/checkpoints/
+deeplabv3plus/mask2former/Miniconda3-latest-Linux-x86_64.sh
