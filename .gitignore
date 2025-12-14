@@ -9,3 +9,10 @@ mask2former_/checkpoints/
 mask2former_/runs/
 mask2former_/logs/
 mask2former_/visdom_logs/
+
+# DeepLabV3+ checkpoints / logs
+deeplabv3plus/checkpoints/
+deeplabv3plus/runs/
+deeplabv3plus/logs/
+deeplabv3plus/visdom_logs/
+deeplabv3plus/*.zip
