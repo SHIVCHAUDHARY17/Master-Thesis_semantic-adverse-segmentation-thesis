@@ -1,104 +1,100 @@
-# Mask2Former under Adverse Weather Conditions
+# Transformer-Based Semantic Segmentation for Autonomous Driving in Adverse Weather
 
-This repository contains the code and experimental setup for my Master's thesis on  
-**transformer-based semantic segmentation under adverse weather conditions**.
+This repository contains the code and experimental setup for my Master’s thesis:
 
-The work is conceptually based on the DeepLabV3+-pipeline from  
-“Semantic Segmentation under Adverse Conditions: A Weather and Nighttime-aware Synthetic
-Data-based Approach” (Kerim et al.), but replaces DeepLabV3+ with **Mask2Former** (Swin-L)
-and focuses on **real-world** data (Cityscapes + ACDC) instead of synthetic AWSS.
+> **“Transformer-Based Semantic Segmentation for Autonomous Driving in Adverse Weather Conditions Using Weather- and Time-Aware Supervision”**  
+> Technische Hochschule Ingolstadt – International Automotive Engineering  
+> Author: **Shiv Chaudhary**
+
+The work is conceptually based on the DeepLabV3+-based pipeline of  
+**“Semantic Segmentation under Adverse Conditions: A Weather- and Nighttime-aware Synthetic Data-based Approach”** (Kerim et al.)  
+but replaces DeepLabV3+ with **Mask2Former (Swin-L)** and focuses on **real-world** adverse conditions (Cityscapes + ACDC), not synthetic AWSS.
 
 Core ideas:
 
-- Train a **single segmentation model** that remains robust on both clear-weather
-  (Cityscapes) and adverse-weather (ACDC) scenes.
-- Use **alternate-batch training** on Cityscapes and ACDC instead of separate models.
-- Add **Weather-Aware Supervisor (WAS)** and **Time-Aware Supervisor (TAS)** heads for
-  auxiliary weather/time classification (low-weight multi-task loss).
-- Keep the pipeline **reproducible**, with exported `environment.yml` and
-  `requirements.txt`.
+- Train **one Mask2Former model** that stays robust across:
+  - clear-weather scenes (Cityscapes)
+  - adverse conditions (ACDC: rain, fog, snow, night)
+- Use **alternate-batch training**: CS, ACDC, CS, ACDC, …  
+- Use **Weather-Aware Supervisor (WAS)** and **Time-Aware Supervisor (TAS)** heads for multi-task learning (weather & time-of-day classification).
+- Apply **selective encoder freezing** to preserve clear-weather features while adapting to adverse conditions.
 
 ---
 
-## Repository Structure
+## Repository structure
 
 ```text
 Master-Thesis_semantic-adverse-segmentation-thesis/
 ├── LICENSE
 ├── README.md
-├── environment.yml          # Conda environment export (used in thesis experiments)
-├── requirements.txt         # pip-style package list from the working env
-└── mask2former_/            # Main code for Mask2Former thesis experiments
-    ├── Scripts_Extra/       # Additional training/eval scripts (ablations, variants)
+├── environment.yml          # Conda environment (exported from working setup)
+├── requirements.txt         # pip-style dependencies (same env as above)
+└── mask2former_/            # Main thesis code
+    ├── Scripts_Extra/       # Extra experiment scripts / ablations
     ├── artifacts/
     │   └── splits/
-    │       └── acdc/
-    │           └── acdc_train_85_15_seed1.json   # ACDC 85/15 train/val split
-    ├── assets/              # Final thesis figures (bar charts, qualitative examples, etc.)
+    ├── assets/              # Figures used in the thesis (bar charts, samples, etc.)
     ├── checkpoints/         # EXPECTED location for .pth files (ignored by git)
-    ├── datasets/            # Cityscapes + ACDC dataset wrappers
-    ├── metrics/             # StreamSegMetrics (mIoU, per-class IoU, etc.)
-    ├── models/              # Auxiliary WAS/TAS heads
-    ├── network/             # Mask2Former wrapper + modeling utilities
-    ├── utils/               # Training utils, transforms, schedulers, visualizer
-    └── main_mask2former_WAS_TAS_ON_1.0.py  # Main training/eval script for final model
+    ├── datasets/            # Dataset wrappers (Cityscapes + ACDC)
+    ├── metrics/             # StreamSegMetrics (mIoU, etc.)
+    ├── models/              # WAS/TAS auxiliary heads
+    ├── network/             # Mask2Former model wrapper
+    ├── utils/               # Transforms, losses, schedulers, visualizer
+    └── main_mask2former_WAS_TAS_ON_1.0.py   # Main training / eval script
+Note: mask2former_/checkpoints/ is intentionally ignored in .gitignore because the files are large.
+You must download checkpoints separately (see below) or train from scratch.
 
 
-Note: mask2former_/checkpoints/ is ignored in git on purpose (large files).
 
-1. Environment Setup
+1. Environment setup
 
-The experiments were run in a Conda environment named mask2former-adverse with:
+The experiments were run in a Conda environment with:
 
 Python 3.8
 
-PyTorch + CUDA (GPU required for practical training)
+PyTorch with CUDA (GPU strongly recommended)
 
 Hugging Face transformers (Mask2Former implementation)
 
-Typical vision stack: numpy, tqdm, opencv-python, Pillow, matplotlib, etc.
+Typical vision libs (numpy, tqdm, opencv-python, Pillow, matplotlib, etc.)
 
-1.1. Recreate the thesis environment (recommended)
+You can re-create the exact environment from the exported files:
 
-From the repo root:
-
-# Create the environment from the exported YAML
+# Option A: Conda from environment.yml (recommended)
 conda env create -f environment.yml
+conda activate mask2former-adverse  # or the name inside the yml
 
-# Activate it
-conda activate mask2former-adverse
-
-
-This should give you an environment matching the one used for the final experiments
-(minor differences are possible depending on your Conda setup).
-
-1.2. Minimal setup via requirements.txt (alternative)
-
-If you prefer, you can install from requirements.txt instead:
-
+# Option B: Create manually + pip from requirements.txt
 conda create -n mask2former-adverse python=3.8
 conda activate mask2former-adverse
 
 pip install -r requirements.txt
 
 
-If CUDA / PyTorch versions complain, install the matching PyTorch build for your GPU/driver
-from the official PyTorch site, then re-run pip install -r requirements.txt to fill
-the remaining packages.
+If you want a minimal manual install instead of using the full exports:
+
+# Example (CUDA command should match your system)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+pip install transformers timm tqdm opencv-python pillow matplotlib
+
+
+
+
 
 2. Datasets
 
 This project uses only real-world datasets:
 
-Cityscapes – urban scenes, clear weather, daytime.
+Cityscapes – clear-weather urban scenes (daytime)
 
-ACDC – Adverse Conditions Dataset with Correspondences (rain, fog, snow, night).
+ACDC – Adverse Conditions Dataset with Correspondences (rain, fog, snow, night)
 
-2.1. Download & folder structure
+2.1 Download
 
-You must obtain both datasets from their official project pages.
+You must request both datasets from their official websites and agree to their licenses.
 
-A typical layout (adapt to your own paths):
+After extraction, a typical layout might be:
 
 /path/to/datasets/
 ├── cityscapes/
@@ -116,74 +112,84 @@ A typical layout (adapt to your own paths):
         ├── train/
         └── val/
 
-2.2. Point the code to your dataset paths
+2.2 Tell the code where the datasets are
 
-The main script reads dataset roots either from:
+The main script uses explicit paths for Cityscapes and ACDC:
 
-Environment variables
-CS_ROOT and ACDC_ROOT, or
+opts.data_root_cs → Cityscapes root
 
-CLI arguments --data_root_cs and --data_root_acdc.
+opts.data_root_acdc → ACDC root
 
-Example (bash):
+You can either:
+
+Set environment variables:
 
 export CS_ROOT=/path/to/datasets/cityscapes
 export ACDC_ROOT=/path/to/datasets/ACDC
 
 
-In the code, these map to:
+and then run the training command (see next section), or
 
-opts.data_root_cs   = os.environ.get("CS_ROOT",  "/home/.../datasets/cityscapes")
-opts.data_root_acdc = os.environ.get("ACDC_ROOT","/home/.../datasets/ACDC")
+Pass them as CLI arguments:
+
+--data_root_cs /path/to/datasets/cityscapes \
+--data_root_acdc /path/to/datasets/ACDC
 
 
-You can also hard-code your paths in main_mask2former_WAS_TAS_ON_1.0.py if you prefer,
-but environment variables keep things cleaner.
+The dataset code expects 19 Cityscapes classes and applies compatible mappings for ACDC.
 
-3. Checkpoints (Pretrained Models)
 
-The large .pth files are not stored in this repo. You must either:
 
-Train from scratch (slow but fully reproducible), or
 
-Use externally hosted checkpoints (e.g. Google Drive / Hugging Face / Zenodo).
 
-Expected filenames and locations:
+3. Checkpoints (pretrained models)
+
+Large .pth files are hosted on Google Drive:
+
+Google Drive folder (all checkpoints):
+https://drive.google.com/drive/folders/1NJkVJxFCGNzdk71pG4HeZQxVVC3VWS02?usp=drive_link
+
+Make sure the folder is shared as “Anyone with the link – Viewer”.
+
+3.1 Expected filenames
+
+Download the following files from the Drive folder and place them in:
 
 mask2former_/checkpoints/
-├── best_mask2former_WAS_TAS_ON_1.0.pth                 # final CS+ACDC model (WAS/TAS)
-├── best_mask2former_cityscapes_only_os16.pth           # Cityscapes-only baseline
-├── main_mask2former_segonly_acdc_cs_alt_best.pth       # CS+ACDC segmentation-only
-└── main_mask2former_WAS_TAS_ON_Disable_WAS_TAS_best.pth  # ablation (heads disabled)
 
 
-These filenames are referenced directly in the scripts under mask2former_/ and
-mask2former_/Scripts_Extra/.
+Expected files:
 
-(TODO: add public download links once the checkpoints are uploaded.)
+best_mask2former_WAS_TAS_ON_1.0.pth
+– Final CS+ACDC model with WAS/TAS (main thesis model)
+
+best_mask2former_cityscapes_only_os16.pth
+– Cityscapes-only Mask2Former baseline
+
+main_mask2former_segonly_acdc_cs_alt_best.pth
+– Segmentation-only CS+ACDC model (no WAS/TAS)
+
+main_mask2former_WAS_TAS_ON_Disable_WAS_TAS_best.pth
+– Ablation model with WAS/TAS turned off during training
+
+best_mask2former_WAS_TAS_ON_1.2.pth
+– Variant with modified WAS/TAS weighting (used in ablations)
+
+You can also train everything from scratch, but it is time-consuming.
+
+
+
+
+
 
 4. Training
 
-All main thesis experiments use:
-
-Mask2Former with a Swin-L backbone (pretrained on Cityscapes),
-
-Alternate-batch training: Cityscapes batch, then ACDC batch, etc.,
-
-Early encoder layers partially frozen on Cityscapes batches,
-
-WAS/TAS heads (weather/time) with very low loss weights (1e-5),
-
-85/15 train/val split on the training part of each dataset,
-official validation splits used as test sets.
-
-The central script is:
+The main script for the final CS+ACDC model is:
 
 mask2former_/main_mask2former_WAS_TAS_ON_1.0.py
 
-4.1. Final CS+ACDC model (main thesis run)
 
-From inside mask2former_/:
+It supports different --mode values; for the full alternate-batch CS+ACDC training with WAS/TAS, a typical run is:
 
 cd mask2former_
 
@@ -209,28 +215,31 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
   --enable_vis --vis_port 13570 --vis_env main
 
 
-Key points:
+Key behaviour:
 
---mode 0 → joint training on Cityscapes + ACDC with alternating batches.
+Mode 0 → 1:1 alternate-batch training on Cityscapes + ACDC.
 
---cs_split_strategy train85_val15_only_train_split
-→ 85/15 split of the official training split; official val is kept as a test set.
+Encoder freezing strategy:
 
---ws_weight and --tes_weight control the WAS/TAS auxiliary loss weights.
+ACDC batches: full encoder trainable.
 
---per_condition_val enables per-condition metrics on ACDC (rain/fog/snow/night).
+Cityscapes batches: low-level encoder blocks are frozen; higher layers stay trainable.
 
-Visdom is optional; disable by dropping --enable_vis.
+WAS/TAS:
 
-5. Evaluation / Inference
+Weather and time-of-day heads are trained as auxiliary tasks.
 
-The repository also contains scripts in mask2former_/Scripts_Extra/ for specific
-evaluation settings and ablations.
+Loss weights ws_weight and tes_weight are small (e.g. 1e-5) so segmentation dominates.
 
-5.1. Segmentation-only CS+ACDC model on ACDC (e.g. night)
 
-Example (seg-only variant):
 
+
+
+5. Evaluation / inference
+
+Additional scripts under mask2former_/Scripts_Extra/ are used for ablations and test-only runs.
+
+5.1 Example – ACDC segmentation-only model (night split)
 cd mask2former_
 
 CUDA_VISIBLE_DEVICES=0 \
@@ -244,7 +253,7 @@ python Scripts_Extra/main_mask2former_segonly_acdcfirst.py \
   --crop_size 640 \
   --ckpt checkpoints/main_mask2former_segonly_acdc_cs_alt_best.pth
 
-5.2. Final WAS+TAS model on full ACDC val (overall)
+5.2 Example – Final WAS+TAS model on ACDC (all conditions)
 cd mask2former_
 
 CUDA_VISIBLE_DEVICES=0 \
@@ -258,16 +267,17 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
   --ckpt checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
 
 
---mode 21 → ACDC test-only mode.
+The evaluation prints mean IoU (mIoU) and per-class IoUs using the standard 19-class Cityscapes taxonomy.
+Optional configurations in the script also allow 10-class remapping for the subset used in the thesis.
 
-Results are reported as mIoU over the standard 19-class Cityscapes taxonomy.
 
-Optional 10-class remapping for some experiments is supported via --eval_mode 10
-and --labelmap, but that is not required for basic reproduction.
 
-6. Assets (Figures used in the Thesis)
 
-The mask2former_/assets/ folder contains the final figures used in the thesis:
+
+
+6. Assets (figures used in the thesis)
+
+The folder mask2former_/assets/ contains the final figures that appear in the thesis:
 
 barchart_comparison_deeplabv3plus_vs_mask2former_on_cityscapes.png
 
@@ -277,46 +287,55 @@ figure_qualitative_comparison_between_baselines_and_final_proposed_method.png
 
 table_consolidated_ablation_results_stage_1_to_7_miou_cityscapes_acdc.png
 
-These are not needed to run the code, but they document the final performance and
-ablation results as reported in the written thesis.
+They are not required to run the code, but they document the final performance comparisons and ablation results.
 
-7. Reproducing the Thesis Experiments (Overview)
+7. Reproducing the main thesis experiments
 
-High-level list of the main experiments:
+High-level summary of the main setups:
 
-Cityscapes-only Mask2Former baseline
+Cityscapes-only baseline (Mask2Former)
 
-Train on Cityscapes train 85%, validate on Cityscapes train 15%.
+Train on Cityscapes train (85%) / internal val (15%).
 
-Evaluate on the official Cityscapes val split (treated as a test set).
+Evaluate on official Cityscapes val (treated as test set in the thesis).
 
-Segmentation-only CS+ACDC alternate-batch variant
+Segmentation-only CS+ACDC variants
 
-Training on both datasets with only segmentation loss.
+Use scripts under Scripts_Extra/ (e.g. main_mask2former_segonly_acdcfirst.py).
 
-Used for ablation comparisons.
+No WAS/TAS supervision, only segmentation loss.
 
-Final CS+ACDC alternate-batch model with WAS+TAS (main thesis model)
+Final CS+ACDC alternate-batch model with WAS+TAS (main contribution)
 
-1:1 batch alternation: CS, ACDC, CS, ACDC, …
+Alternate-batch schedule CS / ACDC.
 
-Early encoder layers partially frozen on CS batches to preserve clear-weather features.
+Selective encoder freezing (low-level blocks frozen on CS batches).
 
-WAS/TAS heads trained as auxiliary tasks with low weights (1e-5).
+WAS/TAS heads trained with small loss weights as auxiliary tasks.
 
 Evaluation on:
 
-Cityscapes val (clear-weather performance),
+Cityscapes val (clear weather)
 
-ACDC val (rain, fog, snow, night, and overall).
+ACDC val (rain, fog, snow, night, overall)
 
-Exact hyperparameters are set in the scripts and can be overridden via CLI flags.
+All hyperparameters (iterations, LR, crop size, batch size, etc.) are defined in the scripts and configurable via command-line flags.
+
+
+
+
+
+
+
+
 
 8. Acknowledgements
 
-Training strategy and the idea of weather/time awareness originate from:
-“Semantic Segmentation under Adverse Conditions” (Kerim et al.) and their
-official DeepLabV3+-based implementation.
+Training strategy and the idea of weather-/time-aware supervision are inspired by:
 
-Mask2Former and the Swin-L backbone are based on the implementations from the
-original authors and the Hugging Face transformers library.
+Kerim et al., “Semantic Segmentation under Adverse Conditions: A Weather- and Nighttime-aware Synthetic Data-based Approach.”
+
+and their official DeepLabV3+ implementation:
+https://github.com/lsmcolab/Semantic-Segmentation-under-Adverse-Conditions
+
+Mask2Former and the Swin-L backbone build upon the implementations by the original authors and the Hugging Face ecosystem.
