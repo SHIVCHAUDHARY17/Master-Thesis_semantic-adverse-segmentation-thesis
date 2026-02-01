@@ -1,40 +1,41 @@
-````md
 # Transformer-Based Semantic Segmentation for Autonomous Driving in Adverse Weather
 
 This repository contains the code and experimental setup for my Master’s thesis:
 
-> **Transformer-Based Semantic Segmentation for Autonomous Driving in Adverse Weather Conditions Using Weather- and Time-Aware Supervision**  
-> Technische Hochschule Ingolstadt – International Automotive Engineering  
+> **Transformer-Based Semantic Segmentation for Autonomous Driving in Adverse Weather Conditions Using Weather- and Time-Aware Supervision**
+> Technische Hochschule Ingolstadt – International Automotive Engineering
 > Author: **Shiv Chaudhary**
 
-The work is conceptually based on the DeepLabV3+-based pipeline of  
-**Semantic Segmentation under Adverse Conditions: A Weather- and Nighttime-aware Synthetic Data-based Approach** (Kerim et al.)  
+The work is conceptually based on the DeepLabV3+-based pipeline of
+**Semantic Segmentation under Adverse Conditions: A Weather- and Nighttime-aware Synthetic Data-based Approach** (Kerim et al.)
 but replaces DeepLabV3+ with **Mask2Former (Swin-L)** and focuses on **real-world** adverse conditions (**Cityscapes + ACDC**), not synthetic AWSS.
 
 ---
 
 ## Contents
-- [Core ideas](#core-ideas)
-- [Repository structure](#repository-structure)
-- [1. Environment setup](#1-environment-setup)
-- [2. Datasets](#2-datasets)
-- [3. Checkpoints](#3-checkpoints-pretrained-models)
-- [4. Training](#4-training)
-- [5. Evaluation / inference](#5-evaluation--inference)
-- [6. Assets](#6-assets-figures-used-in-the-thesis)
-- [7. Reproducing the main thesis experiments](#7-reproducing-the-main-thesis-experiments)
-- [8. Acknowledgements](#8-acknowledgements)
+
+* [Core ideas](#core-ideas)
+* [Repository structure](#repository-structure)
+* [1. Environment setup](#1-environment-setup)
+* [2. Datasets](#2-datasets)
+* [3. Checkpoints (pretrained models)](#3-checkpoints-pretrained-models)
+* [4. Training](#4-training)
+* [5. Evaluation / inference](#5-evaluation--inference)
+* [6. Assets (figures used in the thesis)](#6-assets-figures-used-in-the-thesis)
+* [7. Reproducing the main thesis experiments](#7-reproducing-the-main-thesis-experiments)
+* [8. Acknowledgements](#8-acknowledgements)
 
 ---
 
 ## Core ideas
 
-- Train **one Mask2Former model** that stays robust across:
-  - clear-weather scenes (**Cityscapes**)
-  - adverse conditions (**ACDC**: rain, fog, snow, night)
-- Use **alternate-batch training**: CS → ACDC → CS → ACDC → …
-- Use **Weather-Aware Supervisor (WAS)** and **Time-Aware Supervisor (TAS)** heads for multi-task learning (weather & time-of-day classification).
-- Apply **selective encoder freezing** to preserve clear-weather features while adapting to adverse conditions, and study the impact through ablations.
+* Train **one Mask2Former model** that stays robust across:
+
+  * clear-weather scenes (**Cityscapes**)
+  * adverse conditions (**ACDC**: rain, fog, snow, night)
+* Use **alternate-batch training**: Cityscapes → ACDC → Cityscapes → ACDC → …
+* Use **Weather-Aware Supervisor (WAS)** and **Time-Aware Supervisor (TAS)** heads for multi-task learning (weather & time-of-day classification).
+* Apply **selective encoder freezing** to preserve clear-weather features while adapting to adverse conditions, and study the impact through ablations.
 
 <p align="center">
   <img src="mask2former_/assets/figure_qualitative_comparison_between_baselines_and_final_proposed_method.png" width="900">
@@ -59,14 +60,14 @@ Master-Thesis_semantic-adverse-segmentation-thesis/
     ├── artifacts/
     │   └── splits/
     ├── assets/              # Figures used in the thesis (bar charts, samples, etc.)
-    ├── checkpoints/         # EXPECTED location for .pth files (ignored by git)
+    ├── checkpoints/         # Expected location for .pth files (ignored by git)
     ├── datasets/            # Dataset wrappers (Cityscapes + ACDC)
     ├── metrics/             # StreamSegMetrics (mIoU, etc.)
     ├── models/              # WAS/TAS auxiliary heads
     ├── network/             # Mask2Former model wrapper
     ├── utils/               # Transforms, losses, schedulers, visualizer
     └── main_mask2former_WAS_TAS_ON_1.0.py   # Main training / eval script
-````
+```
 
 > [!NOTE]
 > `mask2former_/checkpoints/` is intentionally ignored in `.gitignore` because model files are large.
@@ -259,30 +260,9 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
 
 Additional scripts under `mask2former_/Scripts_Extra/` are used for ablations and test-only runs.
 
----
+### 5.1 Final thesis model (WAS+TAS) – evaluation commands
 
-### 5.1 Example – ACDC segmentation-only model (night split)
-
-```bash
-cd mask2former_
-
-CUDA_VISIBLE_DEVICES=0 \
-python Scripts_Extra/main_mask2former_segonly_acdcfirst.py \
-  --mode 21 \
-  --dataset ACDC \
-  --ACDC_test_class night \
-  --test_batch_size 3 \
-  --num_classes 19 \
-  --output_stride 16 \
-  --crop_size 640 \
-  --ckpt checkpoints/main_mask2former_segonly_acdc_cs_alt_best.pth
-```
-
----
-
-### 5.2 Final thesis model (WAS+TAS) – evaluation commands
-
-All evaluations below use the final trained checkpoint:
+All evaluations below use:
 
 ```text
 checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
@@ -291,9 +271,7 @@ checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
 > [!NOTE]
 > The evaluation prints **mean IoU (mIoU)** and **per-class IoU** using the standard **19-class Cityscapes taxonomy**.
 
----
-
-#### (1) Evaluation on **Cityscapes (overall)**
+#### (1) Cityscapes (overall)
 
 ```bash
 cd mask2former_
@@ -309,9 +287,7 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
   --ckpt checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
 ```
 
----
-
-#### (2) Evaluation on **ACDC (overall)**
+#### (2) ACDC (overall)
 
 ```bash
 cd mask2former_
@@ -327,9 +303,7 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
   --ckpt checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
 ```
 
----
-
-#### (3) Evaluation on **ACDC – Rain**
+#### (3) ACDC – Rain
 
 ```bash
 cd mask2former_
@@ -346,9 +320,7 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
   --ckpt checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
 ```
 
----
-
-#### (4) Evaluation on **ACDC – Fog**
+#### (4) ACDC – Fog
 
 ```bash
 cd mask2former_
@@ -365,9 +337,7 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
   --ckpt checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
 ```
 
----
-
-#### (5) Evaluation on **ACDC – Snow**
+#### (5) ACDC – Snow
 
 ```bash
 cd mask2former_
@@ -384,9 +354,7 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
   --ckpt checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
 ```
 
----
-
-#### (6) Evaluation on **ACDC – Night**
+#### (6) ACDC – Night
 
 ```bash
 cd mask2former_
@@ -414,8 +382,6 @@ The folder `mask2former_/assets/` contains figures used in the thesis:
 * `figure_qualitative_comparison_between_baselines_and_final_proposed_method.png`
 * `table_consolidated_ablation_results_stage_1_to_7_miou_cityscapes_acdc.png`
 
-These are not required to run the code, but they document performance comparisons and ablation results.
-
 ---
 
 ## 7. Reproducing the main thesis experiments
@@ -434,8 +400,8 @@ High-level summary of the main setups:
 
 ### Final CS+ACDC alternate-batch model with WAS+TAS (main contribution)
 
-* Alternate-batch schedule: CS / ACDC
-* Selective encoder freezing (low-level blocks frozen on CS batches)
+* Alternate-batch schedule: Cityscapes / ACDC
+* Selective encoder freezing (low-level blocks frozen on Cityscapes batches)
 * WAS/TAS heads trained as auxiliary tasks with small loss weights
 * Evaluation on:
 
@@ -468,7 +434,4 @@ Official DeepLabV3+ implementation:
 
 Mask2Former and the Swin-L backbone build upon the original authors’ implementations and the Hugging Face ecosystem.
 
-```
-::contentReference[oaicite:0]{index=0}
-```
-          
+---
