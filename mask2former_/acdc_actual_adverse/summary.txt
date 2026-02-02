@@ -1,0 +1,60 @@
+================================================================================
+MASK2FORMER ACDC ADVERSE WEATHER EVALUATION SUMMARY
+================================================================================
+
+Model Information:
+  Checkpoint: best_mask2former_WAS_TAS_ON_1.0.pth
+  Architecture: Mask2Former with Swin-T backbone
+  Parameters: 215.5 million
+  Inference Speed: ~1.65 FPS @ 1024×2048
+  Training: Cityscapes + ACDC (multi-weather)
+
+Weather Scene (WS) Classes:
+  0: Clear
+  1: Rain
+  2: Fog
+  3: Snow
+
+Time of Day Scene (TES) Classes:
+  0: Day
+  1: Night
+
+================================================================================
+RESULTS BY WEATHER CONDITION
+================================================================================
+
+CLEAR:
+  Input: frankfurt_000000_000294_leftImg8bit.png
+  WS Prediction: 0 (Clear)
+  TES Prediction: 0 (Day)
+  ✓ WS Correct
+  ✓ TES Correct
+
+RAIN:
+  Input: GOPR0572_frame_000145_rgb_anon.png
+  WS Prediction: 0 (Clear)
+  TES Prediction: 0 (Day)
+  ✗ WS Incorrect (expected 1)
+  ✓ TES Correct
+
+FOG:
+  Input: GOPR0475_frame_000247_rgb_anon.png
+  WS Prediction: 0 (Clear)
+  TES Prediction: 0 (Day)
+  ✗ WS Incorrect (expected 2)
+  ✓ TES Correct
+
+SNOW:
+  Input: GOPR0122_frame_000651_rgb_anon.png
+  WS Prediction: 0 (Clear)
+  TES Prediction: 0 (Day)
+  ✗ WS Incorrect (expected 3)
+  ✓ TES Correct
+
+NIGHT:
+  Input: GOPR0355_frame_000138_rgb_anon.png
+  WS Prediction: 1 (Rain)
+  TES Prediction: 0 (Day)
+  ✗ WS Incorrect (expected 0)
+  ✗ TES Incorrect (expected 1)
+
