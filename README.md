@@ -67,7 +67,7 @@ Master-Thesis_semantic-adverse-segmentation-thesis/
     ├── network/             # Mask2Former model wrapper
     ├── utils/               # Transforms, losses, schedulers, visualizer
     └── main_mask2former_WAS_TAS_ON_1.0.py   # Main training / eval script
-```
+````
 
 > [!NOTE]
 > `mask2former_/checkpoints/` is intentionally ignored in `.gitignore` because model files are large.
@@ -175,7 +175,7 @@ Google Drive folder (all checkpoints):
 [https://drive.google.com/drive/folders/1NJkVJxFCGNzdk71pG4HeZQxVVC3VWS02?usp=drive_link](https://drive.google.com/drive/folders/1NJkVJxFCGNzdk71pG4HeZQxVVC3VWS02?usp=drive_link)
 
 > [!IMPORTANT]
-> Make sure the folder is shared as **Anyone with the link – Viewer**.
+The Drive folder also contains a `commands_ablation_stages_4_to_6.txt` file with the full training/evaluation commands for non-final ablation runs.
 
 ### 3.1 Expected filenames
 
@@ -185,25 +185,29 @@ Download the files and place them in:
 mask2former_/checkpoints/
 ```
 
-Expected files:
+Ablation Stage 4 — Cityscapes-only baseline (Mask2Former)
 
-* `best_mask2former_WAS_TAS_ON_1.0.pth`
-  Final CS+ACDC model with WAS/TAS (**main thesis model**)
+best_mask2former_cityscapes_only_os16.pth
+Script: mask2former_/Scripts_Extra/main_mask2former_cityscapes_only.py
+About: Cityscapes-only Mask2Former baseline (no ACDC). Used to measure clear-weather performance before any adverse-condition adaptation.
 
-* `best_mask2former_cityscapes_only_os16.pth`
-  Cityscapes-only Mask2Former baseline
+Ablation Stage 5 — Mixed-dataset on original Mask2Former (segmentation-only)
 
-* `main_mask2former_segonly_acdc_cs_alt_best.pth`
-  Segmentation-only CS+ACDC model (no WAS/TAS)
+mixdataset_on_original_mask2former_segonly_best.pth
+Script: mask2former_/Scripts_Extra/mixdataset_on_original_mask2former.py
+About: Ablation experiment that runs mixed-dataset training/inference using the original Mask2Former segmentation-only setup, to study domain mixing effects before introducing WAS/TAS or selective encoder freezing.
 
-* `main_mask2former_WAS_TAS_ON_Disable_WAS_TAS_best.pth`
-  Ablation model where WAS/TAS supervision is disabled during training
+Ablation Stage 6 — Segmentation-only CS + ACDC (no WAS/TAS)
 
-* `best_mask2former_WAS_TAS_ON_1.2.pth`
-  Variant with modified WAS/TAS weighting (used in ablations)
+main_mask2former_segonly_acdc_cs_alt_best.pth
+Script: mask2former_/Scripts_Extra/main_mask2former_segonly_acdcfirst.py (and related seg-only scripts in Scripts_Extra/)
+About: Segmentation-only alternate-batch training on Cityscapes + ACDC (no WAS/TAS supervision). This isolates the benefit of alternate-batch learning without auxiliary heads.
 
-> [!NOTE]
-> You can also train everything from scratch, but it is time-consuming.
+Ablation Stage 7 — Final thesis model (CS + ACDC + WAS/TAS)
+
+best_mask2former_WAS_TAS_ON_1.0.pth
+Script: mask2former_/main_mask2former_WAS_TAS_ON_1.0.py
+About: Final proposed model trained with alternate-batch Cityscapes + ACDC, selective encoder freezing, and WAS/TAS auxiliary supervision (main thesis contribution).
 
 ---
 
@@ -241,6 +245,12 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
   --per_condition_val \
   --enable_vis --vis_port 13570 --vis_env main
 ```
+> [!IMPORTANT]
+> The training command shown in **Section 4** corresponds to **Ablation Stage 7 (Final thesis model)** only  
+> (i.e., the final CS+ACDC model with WAS/TAS and selective encoder freezing).
+>
+> Commands for running **all other ablation stages (Stages 4–6)** are provided separately as a **text file in Google Drive**  
+> (see the Drive folder in Section 3) to keep this README focused on the final reproducible setup.
 
 ### Key behaviour
 
@@ -267,6 +277,12 @@ All evaluations below use:
 ```text
 checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
 ```
+> [!IMPORTANT]
+> All evaluation commands in **Section 5.1** are for **Ablation Stage 7 (Final thesis model)** only  
+> using `checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth`.
+>
+> Evaluation/training commands for **Stages 4–6** are stored as a **text file in Google Drive**  
+> (see the Drive folder in Section 3).
 
 > [!NOTE]
 > The evaluation prints **mean IoU (mIoU)** and **per-class IoU** using the standard **19-class Cityscapes taxonomy**.
@@ -370,6 +386,32 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
   --crop_size 640 \
   --ckpt checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
 ```
+
+---
+
+### 5.2 Pure inference script (saves outputs, no mIoU computation)
+
+Inference-only script:
+
+```text
+mask2former_/Scripts_Extra/run_acdc_actual_adverse.py
+```
+
+Example run:
+
+```bash
+cd mask2former_
+
+CUDA_VISIBLE_DEVICES=0 \
+python Scripts_Extra/run_acdc_actual_adverse.py \
+  --dataset ACDC \
+  --num_classes 19 \
+  --output_stride 16 \
+  --crop_size 640 \
+  --ckpt checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
+```
+
+> This script is intended for **pure inference** (saving qualitative outputs) and is kept separate from the evaluation commands above.
 
 ---
 
