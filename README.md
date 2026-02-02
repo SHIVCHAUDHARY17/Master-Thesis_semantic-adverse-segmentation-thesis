@@ -294,7 +294,7 @@ cd mask2former_
 
 CUDA_VISIBLE_DEVICES=0 \
 python main_mask2former_WAS_TAS_ON_1.0.py \
-  --mode 21 \
+  --mode 11 \
   --dataset cityscapes \
   --test_batch_size 3 \
   --num_classes 19 \
