@@ -1,0 +1,234 @@
+============================================================
+COMMANDS: Ablation Stages 4–6 (Training + Evaluation)
+Repository: Master-Thesis_semantic-adverse-segmentation-thesis
+Code root: mask2former_/
+============================================================
+
+Prerequisites:
+-------------
+(1) Activate your environment:
+    conda activate mask2former-adverse
+
+(2) Export dataset paths:
+    export CS_ROOT=/path/to/datasets/cityscapes
+    export ACDC_ROOT=/path/to/datasets/ACDC
+
+(3) Run all commands from:
+    cd mask2former_
+
+------------------------------------------------------------
+
+NOTE:
+-----
+• Batch size is fixed to 3 for both training and evaluation.
+• Dataset evaluation modes:
+    - Cityscapes → mode 11
+    - ACDC        → mode 21
+
+------------------------------------------------------------
+Ablation Stage 4
+Cityscapes-only baseline (Mask2Former)
+------------------------------------------------------------
+
+Checkpoint:
+-----------
+best_mask2former_cityscapes_only_os16.pth
+
+Script:
+-------
+mask2former_/Scripts_Extra/main_mask2former_cityscapes_only.py
+
+About:
+------
+Cityscapes-only Mask2Former baseline (no ACDC).
+Used to establish clear-weather performance before any
+adverse-condition adaptation.
+
+-----------------------
+[Stage 4 - TRAIN] Cityscapes
+-----------------------
+
+cd mask2former_
+
+CUDA_VISIBLE_DEVICES=0 \
+python Scripts_Extra/main_mask2former_cityscapes_only.py \
+  --mode 0 \
+  --dataset cityscapes \
+  --data_root_cs "$CS_ROOT" \
+  --num_classes 19 \
+  --output_stride 16 \
+  --crop_size 640 \
+  --batch_size 3 \
+  --total_itrs 90000 \
+  --lr 1e-5 \
+  --loss_type cross_entropy
+
+-----------------------
+[Stage 4 - EVAL] Cityscapes (overall)
+-----------------------
+
+CUDA_VISIBLE_DEVICES=0 \
+python Scripts_Extra/main_mask2former_cityscapes_only.py \
+  --mode 11 \
+  --dataset cityscapes \
+  --test_batch_size 3 \
+  --num_classes 19 \
+  --output_stride 16 \
+  --crop_size 640 \
+  --ckpt checkpoints/best_mask2former_cityscapes_only_os16.pth
+
+-----------------------
+[Stage 4 - EVAL] ACDC (overall)
+-----------------------
+
+CUDA_VISIBLE_DEVICES=0 \
+python Scripts_Extra/main_mask2former_cityscapes_only.py \
+  --mode 21 \
+  --dataset ACDC \
+  --data_root_acdc "$ACDC_ROOT" \
+  --test_batch_size 3 \
+  --num_classes 19 \
+  --output_stride 16 \
+  --crop_size 640 \
+  --ckpt checkpoints/best_mask2former_cityscapes_only_os16.pth
+
+
+============================================================
+Ablation Stage 5
+Mixed-dataset on original Mask2Former (segmentation-only)
+============================================================
+
+Checkpoint:
+-----------
+mixdataset_on_original_mask2former_segonly_best.pth
+
+Script:
+-------
+mask2former_/Scripts_Extra/mixdataset_on_original_mask2former.py
+
+About:
+------
+Mixed-dataset training/inference using the original
+Mask2Former segmentation-only setup.
+Used to study domain mixing effects before introducing
+WAS/TAS or selective encoder freezing.
+
+-----------------------
+[Stage 5 - TRAIN] Mixed Cityscapes + ACDC
+-----------------------
+
+cd mask2former_
+
+CUDA_VISIBLE_DEVICES=0 \
+python Scripts_Extra/mixdataset_on_original_mask2former.py \
+  --mode 0 \
+  --dataset cityscapes_ACDC \
+  --data_root_cs "$CS_ROOT" \
+  --data_root_acdc "$ACDC_ROOT" \
+  --num_classes 19 \
+  --output_stride 16 \
+  --crop_size 640 \
+  --batch_size 3 \
+  --total_itrs 90000 \
+  --lr 1e-5 \
+  --loss_type cross_entropy
+
+-----------------------
+[Stage 5 - EVAL] Cityscapes (overall)
+-----------------------
+
+CUDA_VISIBLE_DEVICES=0 \
+python Scripts_Extra/mixdataset_on_original_mask2former.py \
+  --mode 11 \
+  --dataset cityscapes \
+  --test_batch_size 3 \
+  --num_classes 19 \
+  --output_stride 16 \
+  --crop_size 640 \
+  --ckpt checkpoints/mixdataset_on_original_mask2former_segonly_best.pth
+
+-----------------------
+[Stage 5 - EVAL] ACDC (overall)
+-----------------------
+
+CUDA_VISIBLE_DEVICES=0 \
+python Scripts_Extra/mixdataset_on_original_mask2former.py \
+  --mode 21 \
+  --dataset ACDC \
+  --test_batch_size 3 \
+  --num_classes 19 \
+  --output_stride 16 \
+  --crop_size 640 \
+  --ckpt checkpoints/mixdataset_on_original_mask2former_segonly_best.pth
+
+
+============================================================
+Ablation Stage 6
+Segmentation-only CS + ACDC (no WAS/TAS)
+============================================================
+
+Checkpoint:
+-----------
+main_mask2former_segonly_acdc_cs_alt_best.pth
+
+Script:
+-------
+mask2former_/Scripts_Extra/main_mask2former_segonly_acdcfirst.py
+
+About:
+------
+Segmentation-only alternate-batch training on Cityscapes + ACDC.
+No Weather-Aware or Time-Aware supervision.
+Used to isolate the benefit of alternate-batch learning alone.
+
+-----------------------
+[Stage 6 - TRAIN] Alternate-batch Cityscapes + ACDC
+-----------------------
+
+cd mask2former_
+
+CUDA_VISIBLE_DEVICES=0 \
+python Scripts_Extra/main_mask2former_segonly_acdcfirst.py \
+  --mode 0 \
+  --dataset cityscapes_ACDC \
+  --data_root_cs "$CS_ROOT" \
+  --data_root_acdc "$ACDC_ROOT" \
+  --num_classes 19 \
+  --output_stride 16 \
+  --crop_size 640 \
+  --batch_size 3 \
+  --total_itrs 90000 \
+  --lr 1e-5 \
+  --loss_type cross_entropy
+
+-----------------------
+[Stage 6 - EVAL] Cityscapes (overall)
+-----------------------
+
+CUDA_VISIBLE_DEVICES=0 \
+python Scripts_Extra/main_mask2former_segonly_acdcfirst.py \
+  --mode 11 \
+  --dataset cityscapes \
+  --test_batch_size 3 \
+  --num_classes 19 \
+  --output_stride 16 \
+  --crop_size 640 \
+  --ckpt checkpoints/main_mask2former_segonly_acdc_cs_alt_best.pth
+
+-----------------------
+[Stage 6 - EVAL] ACDC (overall)
+-----------------------
+
+CUDA_VISIBLE_DEVICES=0 \
+python Scripts_Extra/main_mask2former_segonly_acdcfirst.py \
+  --mode 21 \
+  --dataset ACDC \
+  --test_batch_size 3 \
+  --num_classes 19 \
+  --output_stride 16 \
+  --crop_size 640 \
+  --ckpt checkpoints/main_mask2former_segonly_acdc_cs_alt_best.pth
+
+============================================================
+END OF FILE
+============================================================
