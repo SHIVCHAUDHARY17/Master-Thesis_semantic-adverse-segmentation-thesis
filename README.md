@@ -174,8 +174,6 @@ Large `.pth` files are hosted on Google Drive:
 Google Drive folder (all checkpoints):
 [https://drive.google.com/drive/folders/1NJkVJxFCGNzdk71pG4HeZQxVVC3VWS02?usp=drive_link](https://drive.google.com/drive/folders/1NJkVJxFCGNzdk71pG4HeZQxVVC3VWS02?usp=drive_link)
 
-> [!IMPORTANT]
-The Drive folder also contains a `commands_ablation_stages_4_to_6.txt` file with the full training/evaluation commands for non-final ablation runs.
 
 ### 3.1 Expected filenames
 
@@ -248,9 +246,6 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
 > [!IMPORTANT]
 > The training command shown in **Section 4** corresponds to **Ablation Stage 7 (Final thesis model)** only  
 > (i.e., the final CS+ACDC model with WAS/TAS and selective encoder freezing).
->
-> Commands for running **all other ablation stages (Stages 4–6)** are provided separately as a **text file in Google Drive**  
-> (see the Drive folder in Section 3) to keep this README focused on the final reproducible setup.
 
 ### Key behaviour
 
@@ -281,8 +276,8 @@ checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth
 > All evaluation commands in **Section 5.1** are for **Ablation Stage 7 (Final thesis model)** only  
 > using `checkpoints/best_mask2former_WAS_TAS_ON_1.0.pth`.
 >
-> Evaluation/training commands for **Stages 4–6** are stored as a **text file in Google Drive**  
-> (see the Drive folder in Section 3).
+> **Note:** Training and evaluation commands for **Ablation Stages 4–6** are provided separately in  
+> `ablation_stage_4_5_6_commands.txt` to keep this README focused on the final thesis model.
 
 > [!NOTE]
 > The evaluation prints **mean IoU (mIoU)** and **per-class IoU** using the standard **19-class Cityscapes taxonomy**.
