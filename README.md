@@ -235,7 +235,7 @@ python main_mask2former_WAS_TAS_ON_1.0.py \
   --num_classes 19 \
   --output_stride 16 \
   --crop_size 640 \
-  --batch_size 1 \
+  --batch_size 3 \
   --val_batch_size 1 \
   --total_itrs 90000 \
   --lr 1e-5 \
